@@ -1,0 +1,27 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+ 
+
+model User {
+  user_id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  google_id String @unique // cannot be null ig
+  name  String
+  user_auth User_Auth?
+}
+
+model User_Auth {
+user_auth_id String @id @default(auto()) @map("_id") @db.ObjectId
+access_token String? @unique
+google_id String @unique
+user  User @relation(fields: [google_id],references: [google_id])
+}
