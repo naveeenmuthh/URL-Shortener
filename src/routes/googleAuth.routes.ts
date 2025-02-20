@@ -17,12 +17,25 @@ export default async function (fastify:FastifyInstance) {
 fastify.get(
   '/google/callback',
   {
-    preValidation: fastifyPassport.authenticate('google', { scope: [ 'profile', 'email']})
+    preValidation: fastifyPassport.authenticate('google', { scope: ['profile', 'email'] }),
   },
-  function (req, res) {
-    res.redirect('/');
+  async function (req, res) {
+    // Ensure authentication was successful
+    if (!req.user || !req.headers.authorization) {
+      return res.status(401).send({ error: "Authentication failed" });
+    }
+
+    // Extract the access token from req.user
+    const access_token = req.headers.authorization;
+
+    console.log("access_token:", access_token);
+
+    // Redirect to homepage
+    res.send({ message:"Congratulations!!, you have Logged in Successfully. Kindly use following access_token for accessing other apis.",
+      access_token});
   }
-)
+);
+
 
 fastify.get('/',
   {

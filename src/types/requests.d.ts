@@ -53,3 +53,35 @@ type PutProduct = {
     id: string;
   }
 }
+
+type PostShortenURL={
+  Body:{
+    longUrl:string;
+    customAlias?:string;
+    topic?:string  
+  }
+  Headers:{
+    google_id:string;
+  }
+}
+
+type GetRedirectURL={
+  Params:{
+    alias:string;
+  }
+  Headers:{
+    google_id:string;
+  }
+}
+
+type GetAnalyticsShortURL={
+  Params:{
+    alias:string;
+  }
+}
+
+type GetTopicWiseAnalytics = {
+ Params:{
+  topic:string;
+ }
+}

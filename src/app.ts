@@ -6,6 +6,7 @@ import fastifyHelmet from '@fastify/helmet';
 import fastifySecureSession from "@fastify/secure-session";
 import fastifyPassport from "@fastify/passport";
 import  jwt from "jsonwebtoken";
+import fastifyRedis from "@fastify/redis";
 const OAuth2Strategy = require('passport-google-oauth').OAuth2Strategy;
 
 import fastifySwagger from '@fastify/swagger';
@@ -17,6 +18,7 @@ import corsConfig from './config/cors.config';
 import loggerConfig from './config/logger.config';
 import compressConfig from './config/compress.config';
 import prismaPlugin from './plugins/prisma.plugin';
+import redisPlugin from './plugins/redis.plugin';
 import helmetConfig from './config/helmet.config';
 import { swaggerConfig } from './config/swagger.config';
 
@@ -25,6 +27,7 @@ import { swaggerConfig } from './config/swagger.config';
 import { messageSchema, paramIdSchema, paginationSchema } from './schema/common.schema';
 import { categorySchema, productSchema } from './schema/models.schema';
 import googleAuthRoutes from './routes/googleAuth.routes';
+import urlShortenRoutes from './routes/urlShorten.routes';
 
 const main = async () => {
   const app = fastify({ logger: loggerConfig });
@@ -40,6 +43,7 @@ const main = async () => {
   await app.register(fastifyCompress, compressConfig);
   await app.register(fastifyHelmet, helmetConfig);
   await app.register(prismaPlugin);
+  await app.register(fastifyRedis,{client:redisPlugin});
   await app.register(fastifySecureSession, {
     key: crypto.randomBytes(32) 
   });
@@ -55,7 +59,6 @@ const main = async () => {
       // Here you want to call your DB and get the user info from there and store it in the session.
       // The session is encrypted but if you don't want to store all the user info in the session just store the DB id in the session
 
-
       const db = request.server.prisma; 
 
       const db_user = await db.user.findUnique({
@@ -68,18 +71,73 @@ const main = async () => {
       }});
 
     console.log("Error here!!");
-    const access_token = jwt.sign({user_id:db_user.user_id},"access_key_secret"); // jwt secret
 
-    await db.user_Auth.findUnique({where:{
+  const user_auth =  await db.user_Auth.findUnique({where:{
       google_id:db_user.google_id,
-    }}) || await db.user_Auth.create({data:{
+    }}) 
+
+    let token = "";
+
+
+  if(user_auth)
+  {
+ 
+   const current_token = user_auth.access_token;
+
+   token = current_token || "";
+
+  if(current_token){
+
+  try {
+    
+    jwt.verify(current_token,"access_key_secret")
+
+  } catch (error:any) {
+    
+    if(error.name == "TokenExpiredError"){
+        
+      const access_token = jwt.sign({google_id:db_user.google_id},"access_key_secret",{expiresIn:"2h"}); // jwt secret
+
+      await db.user_Auth.update({where:{
+        google_id:db_user.google_id,
+      },data:{
+        google_id:db_user.google_id,
+        access_token,
+        limit:0,
+      }});
+
+      token = access_token;
+
+    }
+    else 
+       throw new Error("Invalid Token!");
+
+  }
+
+} 
+else 
+   throw new Error("Invalid Token!");
+
+  }
+  else {
+    
+    const access_token = jwt.sign({google_id:db_user.google_id},"access_key_secret",{expiresIn:"2h"}); // jwt secret
+
+    await db.user_Auth.create({data:{
       google_id:db_user.google_id,
-      access_token
+      access_token,
+      limit:0,
     }});
+
+    token = access_token;
+
+  }
 
     console.log(userForSession);
 
     userForSession = {...userForSession, user_id: db_user.user_id};
+
+    request.headers.authorization = `Bearer ${token}`;
 
       return userForSession
     }
@@ -135,6 +193,7 @@ try {
     // api.register(categoriesRoutes, { prefix: "/categories" });
     // api.register(productsRoutes, { prefix: "/products" });
        api.register(googleAuthRoutes,{prefix:"/auth"});
+       api.register(urlShortenRoutes,{prefix:"/api"})
   });
 
   return app;

@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl"]
 }
 
@@ -10,18 +10,46 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
- 
 
 model User {
-  user_id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  user_id   String @id @default(auto()) @map("_id") @db.ObjectId
   google_id String @unique // cannot be null ig
-  name  String
-  user_auth User_Auth?
+  name      String
+
+  user_auth  User_Auth?
+  short_urls short_urls[]
 }
 
 model User_Auth {
-user_auth_id String @id @default(auto()) @map("_id") @db.ObjectId
-access_token String? @unique
-google_id String @unique
-user  User @relation(fields: [google_id],references: [google_id])
+  user_auth_id String  @id @default(auto()) @map("_id") @db.ObjectId
+  access_token String? @unique
+  google_id    String  @unique
+  limit        Int
+  user         User    @relation(fields: [google_id], references: [google_id])
+}
+
+model short_urls {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime
+  longUrl       String
+  shortUrl      String          @unique @default(uuid())
+  topic         String?
+  google_id     String
+  url_analytics url_analytics[]
+  user          User            @relation(fields: [google_id], references: [google_id])
+
+  @@unique([longUrl, shortUrl, topic])
+  @@unique([longUrl, shortUrl])
+}
+
+model url_analytics {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  user_data  String
+  short_Url  String
+  clickedAt  DateTime
+  host_ip    String
+  osName     String
+  deviceName String
+  geoData    String
+  short_urls short_urls @relation(fields: [short_Url], references: [shortUrl])
 }
