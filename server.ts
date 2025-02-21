@@ -1,5 +1,5 @@
-import { main } from './app';
-import { gracefullyShutdown, unexpectedErrorHandler } from './lib/exit-handler';
+import { main } from './src/app';
+import { gracefullyShutdown, unexpectedErrorHandler } from './src/lib/exit-handler';
 
 /*
  * Build service
