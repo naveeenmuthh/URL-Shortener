@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "fastify-rest",
+      "name": "url-shortener",
       "script": "index.js",
       "instances": 1,
       "autorestart": true,
