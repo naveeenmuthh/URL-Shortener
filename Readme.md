@@ -23,7 +23,7 @@
 # Overview of the project
  - Shortens long urls into simple short urls. 
  - Provides a variety of analytics for the short urls created by a specific user.
- - Ideal for day to day use, For Example, Managing Social Media Posts and Youtube Content.
+ - You can only create 5 Short URLS within a window of 2 hrs (Modify the rate limit in urlShorten Controller)
 
  # Challenges Faced and Approach used
 - Data Storage: Choosing MongoDb[NoSQl] for better scalability and performance. 
