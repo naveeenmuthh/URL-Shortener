@@ -85,7 +85,7 @@ export async function urlShorten(request:FastifyRequest<PostShortenURL>, reply:F
      await db.user_Auth.update({ where: { google_id }, data: { limit: user_auth.limit + 1 } }); 
      await request.server.redis.setex(shorten_url_data.shortUrl,60, shorten_url_data.longUrl);
      return reply.status(201).send({
-       shortUrl: `${request.protocol}://${request.hostname}:5000/api/shorten/${shorten_url_data.shortUrl}`,
+       shortUrl: `${request.protocol}://${request.hostname}/api/shorten/${shorten_url_data.shortUrl}`,
        createdAt: shorten_url_data.createdAt
      });
    } catch (error:any) {
