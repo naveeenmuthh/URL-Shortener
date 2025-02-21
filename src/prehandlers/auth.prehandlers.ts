@@ -19,7 +19,7 @@ export async function authPreHandler(
   try {
     console.log("Token", token);
 
-     jwt.verify(token, "access_key_secret");
+     jwt.verify(token, request.server.config.JWT_SECRET);
 
   } catch (error: any) {
     return reply.status(401).send({ message: "Invalid or Expired Token, Login Again!" });

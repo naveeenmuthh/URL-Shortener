@@ -13,6 +13,7 @@ declare module 'fastify' {
       GOOGLE_CLIENT_ID:string;
       GOOGLE_CLIENT_SECRET:string;
       SECRET_SESSION_KEY:string;
+      JWT_SECRET:string;
     };
   }
 }

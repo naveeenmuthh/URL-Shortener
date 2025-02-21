@@ -22,17 +22,11 @@ import redisPlugin from './plugins/redis.plugin';
 import helmetConfig from './config/helmet.config';
 import { swaggerConfig } from './config/swagger.config';
 
-// import productsRoutes from './routes/products.routes';
-// import categoriesRoutes from './routes/categories.routes';
-import { messageSchema, paramIdSchema, paginationSchema } from './schema/common.schema';
-import { categorySchema, productSchema } from './schema/models.schema';
 import googleAuthRoutes from './routes/googleAuth.routes';
 import urlShortenRoutes from './routes/urlShorten.routes';
 
 const main = async () => {
   const app = fastify({ logger: loggerConfig });
-
-  
 
   // Now we setup our app, plugins and such
   await app.register(fastifyEnv, envConfig);
@@ -51,97 +45,77 @@ const main = async () => {
   await app.register(fastifyPassport.secureSession());
 
   fastifyPassport.registerUserSerializer(
-    async (user:any, request:FastifyRequest) => {
-      console.log('registerUserSerializer', { user })
-      const { id, displayName } = user
-      let userForSession:any = { id, displayName }
-      // User object sent it from Google. 
-      // Here you want to call your DB and get the user info from there and store it in the session.
-      // The session is encrypted but if you don't want to store all the user info in the session just store the DB id in the session
-
-      const db = request.server.prisma; 
-
-      const db_user = await db.user.findUnique({
-        where:{
-             google_id: id
+    async (user: any, request: FastifyRequest) => {
+      try {
+        console.log("registerUserSerializer", { user });
+  
+        const { id: google_id, displayName } = user;
+        let userForSession: any = { google_id, displayName };
+  
+        const db = request.server.prisma;
+  
+        // Fetch user from DB or create if not exists
+        let db_user = await db.user.findUnique({ where: { google_id } });
+  
+        if (!db_user) {
+          db_user = await db.user.create({
+            data: { google_id, name: displayName },
+          });
         }
-      }) || await db.user.create({data:{
-        google_id:id,
-        name:displayName
-      }});
-
-    console.log("Error here!!");
-
-  const user_auth =  await db.user_Auth.findUnique({where:{
-      google_id:db_user.google_id,
-    }}) 
-
-    let token = "";
-
-
-  if(user_auth)
-  {
- 
-   const current_token = user_auth.access_token;
-
-   token = current_token || "";
-
-  if(current_token){
-
-  try {
-    
-    jwt.verify(current_token,"access_key_secret")
-
-  } catch (error:any) {
-    
-    if(error.name == "TokenExpiredError"){
-        
-      const access_token = jwt.sign({google_id:db_user.google_id},"access_key_secret",{expiresIn:"2h"}); // jwt secret
-
-      await db.user_Auth.update({where:{
-        google_id:db_user.google_id,
-      },data:{
-        google_id:db_user.google_id,
-        access_token,
-        limit:0,
-      }});
-
-      token = access_token;
-
+  
+        // Fetch user authentication details
+        let user_auth = await db.user_Auth.findUnique({ where: { google_id } });
+  
+        let token: string = "";
+  
+        if (user_auth) {
+          token = user_auth.access_token || "";
+  
+          if (token) {
+            try {
+              jwt.verify(token, request.server.config.JWT_SECRET);
+            } catch (error: any) {
+              if (error.name === "TokenExpiredError") {
+                console.warn(`Token expired for user: ${google_id}, generating new token.`);
+                
+                token = jwt.sign({ google_id }, request.server.config.JWT_SECRET, { expiresIn: "2h" });
+  
+                await db.user_Auth.update({
+                  where: { google_id },
+                  data: { access_token: token, limit: 0 },
+                });
+              } else {
+                console.error("JWT Error:", error);
+                throw new Error("Invalid JWT Token");
+              }
+            }
+          } else {
+            throw new Error("Invalid Token!");
+          }
+        } else {
+          console.info(`New user detected: ${google_id}, generating authentication entry.`);
+          
+          token = jwt.sign({ google_id }, request.server.config.JWT_SECRET, { expiresIn: "2h" });
+  
+          await db.user_Auth.create({
+            data: { google_id, access_token: token, limit: 0 },
+          });
+        }
+  
+        // Attach token to request headers
+        request.headers.authorization = `Bearer ${token}`;
+  
+        // Prepare session user object
+        userForSession = { ...userForSession, user_id: db_user.user_id };
+  
+        return userForSession;
+  
+      } catch (error: any) {
+        console.error("Error in registerUserSerializer:", error.message);
+        throw new Error("Internal Server Error");
+      }
     }
-    else 
-       throw new Error("Invalid Token!");
-
-  }
-
-} 
-else 
-   throw new Error("Invalid Token!");
-
-  }
-  else {
-    
-    const access_token = jwt.sign({google_id:db_user.google_id},"access_key_secret",{expiresIn:"2h"}); // jwt secret
-
-    await db.user_Auth.create({data:{
-      google_id:db_user.google_id,
-      access_token,
-      limit:0,
-    }});
-
-    token = access_token;
-
-  }
-
-    console.log(userForSession);
-
-    userForSession = {...userForSession, user_id: db_user.user_id};
-
-    request.headers.authorization = `Bearer ${token}`;
-
-      return userForSession
-    }
-  )
+  );
 
   fastifyPassport.registerUserDeserializer(async (userFromSession:any, request:FastifyRequest) => {
 try {
@@ -172,14 +146,6 @@ try {
   ))
  
 
-  // Json Schemas
-  app.addSchema(paginationSchema);
-  app.addSchema(paramIdSchema);
-  app.addSchema(messageSchema);
-
-  app.addSchema(categorySchema);
-  app.addSchema(productSchema);
-
   // Swagger Docs
   if (app.config.ENABLE_SWAGGER) {
     await app.register(fastifySwagger, swaggerConfig);
@@ -190,8 +156,6 @@ try {
 
   // API Endpoint routes
   await app.register(async api => {
-    // api.register(categoriesRoutes, { prefix: "/categories" });
-    // api.register(productsRoutes, { prefix: "/products" });
        api.register(googleAuthRoutes,{prefix:"/auth"});
        api.register(urlShortenRoutes,{prefix:"/api"})
   });
@@ -200,4 +164,3 @@ try {
 };
 
 export { main };
-

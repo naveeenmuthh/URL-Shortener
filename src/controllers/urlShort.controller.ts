@@ -3,6 +3,7 @@ import useragent from "useragent";
 import { FastifyReply, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
 import {subDays,format} from "date-fns";
+import crypto from "crypto";
 
 export async function urlShorten(request:FastifyRequest<PostShortenURL>, reply:FastifyReply) {
    try {
@@ -39,41 +40,49 @@ export async function urlShorten(request:FastifyRequest<PostShortenURL>, reply:F
      let shorten_url_data;
      
      try {
+
+      if(customAlias && await db.short_urls.findUnique({where:{shortUrl:customAlias}}))
+        return reply.status(409).send({message:"Unauthorized: CustomAlias Already Exists, Try a different one!"});
+
        if (customAlias && topic) {
 
          //error here
 
-         if(await db.short_urls.findUnique({where:{shortUrl:customAlias}}))
+         if(await db.short_urls.findUnique({
+          where: { longUrl_shortUrl_topic: { longUrl, shortUrl: customAlias, topic } }
+        }))
              return reply.status(409).send({message:"Unauthorized: Custom Alias Already Exists."});
 
-         console.log("I Of-Course Enter Here!");
-         shorten_url_data = await db.short_urls.findUnique({
-           where: { longUrl_shortUrl_topic: { longUrl, shortUrl: customAlias, topic } }
-         }) || await db.short_urls.create({
+         shorten_url_data = await db.short_urls.create({
            data: { longUrl, shortUrl: customAlias, topic, createdAt: new Date(), google_id }
          });
 
-         console.log(shorten_url_data);
+        //  console.log(shorten_url_data);
        } else if (customAlias) {
 
-         if(await db.short_urls.findUnique({where:{shortUrl:customAlias}}))
-            return reply.status(409).send({message:"Unauthorized: CustomAlias Already Exists, Try a different one!"});
-
-         shorten_url_data = await db.short_urls.findUnique({
-           where: { longUrl_shortUrl: { longUrl, shortUrl: customAlias } }
-         }) || await db.short_urls.create({
+         shorten_url_data =  await db.short_urls.create({
            data: { longUrl, shortUrl: customAlias, createdAt: new Date(), google_id }
          });
        } else {
-         shorten_url_data = await db.short_urls.findFirst({ where: { longUrl } }) || 
-           await db.short_urls.create({ data: { longUrl, createdAt: new Date(), google_id } });
+
+        let uniqueHash;
+        let exists; 
+
+        do{
+
+      uniqueHash = crypto.randomBytes(2).toString('hex');
+      exists = await db.short_urls.findUnique({where:{shortUrl:uniqueHash}});
+
+        }while(exists)
+
+         shorten_url_data = await db.short_urls.create({ data: { longUrl, createdAt: new Date(), google_id, shortUrl:uniqueHash } });
        }
      } catch (error:any) {
        return reply.status(500).send({ message: "Internal Server Error: Database operation failed.", error: error.message });
      }
 
-     await db.user_Auth.update({ where: { google_id }, data: { limit: user_auth.limit + 1 } });
- 
+     await db.user_Auth.update({ where: { google_id }, data: { limit: user_auth.limit + 1 } }); 
+     await request.server.redis.setex(shorten_url_data.shortUrl,60, shorten_url_data.longUrl);
      return reply.status(201).send({
        shortUrl: `${request.protocol}://${request.hostname}:5000/api/shorten/${shorten_url_data.shortUrl}`,
        createdAt: shorten_url_data.createdAt
@@ -94,16 +103,16 @@ export async function redirectURL(request: FastifyRequest<GetRedirectURL>, reply
     const db = request.server.prisma;
 
     // Ensure alias exists in DB
-    const short_url = await db.short_urls.findFirst({
+    const long_url = await request.server.redis.get(alias) || (await db.short_urls.findFirst({
       where: { shortUrl: alias },
-    });
+    }))?.longUrl;
 
-    if (!short_url) {
+    if (!long_url) {
       console.error("Invalid alias:", alias);
       return reply.status(404).send({ error: "Invalid alias!" });
     }
 
-    console.log("Shortened URL found:", short_url.longUrl);
+    console.log("Shortened URL found:", long_url);
 
     let geoData:string="Unknown";
     // const { data } = await axios.get(`http://ip-api.com/json/${request.ip}`);
@@ -125,7 +134,7 @@ export async function redirectURL(request: FastifyRequest<GetRedirectURL>, reply
   const url_analytics_data =  await db.url_analytics.create({data:{
   user_data,
   osName,
-  short_Url:short_url.shortUrl,
+  short_Url:alias,
   clickedAt: new Date(),
   host_ip,
   deviceName,
@@ -135,9 +144,11 @@ export async function redirectURL(request: FastifyRequest<GetRedirectURL>, reply
 console.log(url_analytics_data);
 
     // Ensure the URL is absolute (http/https)
-    const destination = short_url.longUrl.startsWith("http")
-      ? short_url.longUrl
-      : `https://${short_url.longUrl}`; 
+    const destination = long_url.startsWith("http")
+      ? long_url
+      : `https://${long_url}`; 
+
+      await request.server.redis.setex(alias,60,long_url);
 
     // Redirect to the original long URL
     return reply.status(301).redirect(destination);
@@ -154,6 +165,11 @@ console.log(url_analytics_data);
 export async function getUrlAnalytics(request: FastifyRequest<GetAnalyticsShortURL>, reply: FastifyReply) {
   try {
     const { alias:shortUrl } = request.params;
+
+  const cachedAnalytics = await request.server.redis.get(`${shortUrl}_analytics`);
+
+  if(cachedAnalytics)
+    return reply.status(200).send(JSON.parse(cachedAnalytics));
 
     const db = request.server.prisma;
 
@@ -213,6 +229,14 @@ export async function getUrlAnalytics(request: FastifyRequest<GetAnalyticsShortU
       uniqueUsers: uniqueUsers.filter((u) => u.user_data === item.deviceName).length,
     }));
 
+    await request.server.redis.setex(`${shortUrl}_analytics`,10,JSON.stringify({
+      totalClicks,
+      uniqueUsers: uniqueUsers.length,
+      clicksByDate: formattedClicksByDate,
+      osType: osTypeData,
+      deviceType: deviceTypeData,
+    }));
+
     // Response JSON
     return reply.status(200).send({
       totalClicks,
@@ -234,6 +258,11 @@ export async function getTopicWiseAnalytics(request: FastifyRequest<GetTopicWise
     let decoded: any = jwt.decode(token);
     const google_id = decoded.google_id;
     const db = request.server.prisma;
+
+    const cachedAnalytics = await request.server.redis.get(`${google_id}_${topic}_analytics`);
+
+    if(cachedAnalytics)
+      return reply.status(200).send(JSON.parse(cachedAnalytics));
 
     // Get all URLs created by the user
     const userUrls = await db.short_urls.findMany({
@@ -280,6 +309,12 @@ export async function getTopicWiseAnalytics(request: FastifyRequest<GetTopicWise
       clickCount: item._count._all,
     }));
 
+    await request.server.redis.setex(`${google_id}_${topic}_analytics`,10,JSON.stringify({
+      totalUrls,
+      totalClicks,
+      clicksByDate: formattedClicksByDate,
+      uniqueUsers: uniqueUsers.length,
+    }));
 
     // Response JSON
     return reply.status(200).send({
@@ -295,101 +330,17 @@ export async function getTopicWiseAnalytics(request: FastifyRequest<GetTopicWise
   }
 }
 
-export async function getTopicAnalytics(
-  request: FastifyRequest<GetTopicWiseAnalytics>,
-  reply: FastifyReply
-) {
-  try {
-    const { topic } = request.params;
-
-    const db = request.server.prisma;
-
-    // Fetch all short URLs under the given topic
-    const urls = await db.short_urls.findMany({
-      where: { topic },
-      select: { shortUrl: true },
-    });
-
-    if (!urls.length) {
-      return reply.status(404).send({ message: "No URLs found for this topic!" });
-    }
-
-    const shortUrls = urls.map((url) => url.shortUrl);
-
-    // Total Clicks for the topic
-    const totalClicks = await db.url_analytics.count({
-      where: { short_Url: { in: shortUrls } },
-    });
-
-    // Unique Users for the topic
-    const uniqueUsers = await db.url_analytics.groupBy({
-      by: ["user_data"],
-      where: { short_Url: { in: shortUrls } },
-      _count: { _all: true },
-    });
-
-    // Clicks by Date (Last 7 Days)
-    const startDate = subDays(new Date(), 7);
-    const clicksByDate = await db.url_analytics.groupBy({
-      by: ["clickedAt"],
-      where: {
-        short_Url: { in: shortUrls },
-        clickedAt: { gte: startDate },
-      },
-      _count: { _all: true },
-      orderBy: { clickedAt: "asc" },
-    });
-
-    const formattedClicksByDate = clicksByDate.map((item) => ({
-      date: format(new Date(item.clickedAt), "yyyy-MM-dd"),
-      clickCount: item._count._all,
-    }));
-
-    // Analytics for each short URL under the topic
-    const urlAnalytics = await Promise.all(
-      shortUrls.map(async (shortUrl) => {
-        const totalClicks = await db.url_analytics.count({
-          where: { short_Url: shortUrl },
-        });
-
-        const uniqueUsers = await db.url_analytics.groupBy({
-          by: ["user_data"],
-          where: { short_Url: shortUrl },
-          _count: { _all: true },
-        });
-
-        return {
-          shortUrl,
-          totalClicks,
-          uniqueUsers: uniqueUsers.length,
-        };
-      })
-    );
-
-    // Send Response
-    return reply.status(200).send({
-      totalClicks,
-      uniqueUsers: uniqueUsers.length,
-      clicksByDate: formattedClicksByDate,
-      urls: urlAnalytics,
-    });
-  } catch (error: any) {
-    console.error("Error fetching topic-based analytics:", error.message);
-    return reply.status(500).send({ message: "Internal Server Error" });
-  }
-}
-
-
-
-
-
-
 export async function getOverallAnalytics(request: FastifyRequest, reply: FastifyReply) {
   try {
     const token = request.headers.authorization?.split(" ")[1] || "";
     let decoded: any = jwt.decode(token);
     const google_id = decoded.google_id;
     const db = request.server.prisma;
+
+    const cachedAnalytics = await request.server.redis.get(`${google_id}_overall_analytics`);
+
+    if(cachedAnalytics)
+      return reply.status(200).send(JSON.parse(cachedAnalytics));
 
     // Get all URLs created by the user
     const userUrls = await db.short_urls.findMany({
@@ -460,6 +411,15 @@ export async function getOverallAnalytics(request: FastifyRequest, reply: Fastif
       deviceName: item.deviceName,
       uniqueClicks: item._count._all,
       uniqueUsers: uniqueUsers.filter((u) => u.user_data === item.deviceName).length,
+    }));
+
+    await request.server.redis.setex(`${google_id}_overall_analytics`,10,JSON.stringify({
+      totalUrls,
+      totalClicks,
+      uniqueUsers: uniqueUsers.length,
+      clicksByDate: formattedClicksByDate,
+      osType: osTypeData,
+      deviceType: deviceTypeData,
     }));
 
     // Response JSON

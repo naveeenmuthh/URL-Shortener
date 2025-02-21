@@ -35,6 +35,9 @@ const Config = {
        },
        SECRET_SESSION_KEY:{
           type:"string"
+       },
+       JWT_SECRET:{
+        type:"string",
        }
     }
   },

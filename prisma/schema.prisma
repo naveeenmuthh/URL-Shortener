@@ -32,7 +32,7 @@ model short_urls {
   id            String          @id @default(auto()) @map("_id") @db.ObjectId
   createdAt     DateTime
   longUrl       String
-  shortUrl      String          @unique @default(uuid())
+  shortUrl      String          @unique
   topic         String?
   google_id     String
   url_analytics url_analytics[]
