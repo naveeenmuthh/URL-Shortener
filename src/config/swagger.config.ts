@@ -13,8 +13,7 @@ export const swaggerConfig = {
     consumes: ['application/json'],
     produces: ['application/json'],
     tags: [
-      { name: 'categories', description: 'Category related end-points' },
-      { name: 'products', description: 'Product related end-points' }
+      { name: 'Url-Shortener', description: 'Url Shortening end points.' }
     ],
   }
 };

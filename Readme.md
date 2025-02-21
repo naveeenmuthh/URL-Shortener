@@ -1,14 +1,14 @@
 # 🚀 URL-Shortening APIs using Fastify
 
-- The URL-Shortening APIS have been implemented as per the guide lines given [here](https://www.igotskills.in/tasks/31)
-
-## Note
-
-- There might be a initial delay(50 seconds) while using the deployed url after a while since the project is hosted in a free tier plan offered by render. 
+- The URL-Shortening APIS have been implemented as per the guidelines given [here](https://www.igotskills.in/tasks/31)
 
 ## Note
 
 - [Before Accessing any APIs Login Here to get the Bearer token](#login)
+
+## Note
+
+- There might be a initial delay(50 seconds) while using the deployed url after a while since the project is hosted in a free tier plan offered by render. 
 
 ## Deployed URL BASE
  - https://url-shortener-uzv7.onrender.com/

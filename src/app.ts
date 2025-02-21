@@ -144,7 +144,7 @@ try {
   fastifyPassport.use('google', new OAuth2Strategy({
     clientID: app.config.GOOGLE_CLIENT_ID,
     clientSecret: app.config.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'http://localhost:5000/auth/google/callback',
+    callbackURL: 'https://url-shortener-uzv7.onrender.com/auth/google/callback',
   }, function (accessToken: any, refreshToken: any, profile: any, cb: (arg0: null, arg1: any) => any) {
     return cb(null, profile);
   }
@@ -160,8 +160,8 @@ try {
   }
 
    // Welcome end point 
-   app.get("/",async (request:FastifyRequest,reply:FastifyReply)=>{
-reply.send(200).send({message:"Welcome to URL Shortening Service!!", login:"https://url-shortener-uzv7.onrender.com/docs/auth", swaggerDocs:"https://url-shortener-uzv7.onrender.com/docs" });})
+   app.get("/",(request:FastifyRequest,reply:FastifyReply)=>{
+return reply.send(200).send({message:"Welcome to URL Shortening Service!!", login:"https://url-shortener-uzv7.onrender.com/docs/auth", swaggerDocs:"https://url-shortener-uzv7.onrender.com/docs" });})
 
   // API Endpoint routes
   await app.register(async api => {
