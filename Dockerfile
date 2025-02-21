@@ -11,7 +11,7 @@ RUN npm install
 
 COPY . .
 
-RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npx prisma generate
 
 # ---------------- Build Prod Stage
 FROM node:lts-alpine as build
@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npx prisma generate
 
 RUN npm run build
 
@@ -37,17 +37,17 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-COPY package*.json ./
-
+COPY package*.json ./  
 COPY pm2.config.json ./
 
-RUN npm install --production --no-audit --no-save --no-optional --no-fund --no-package-locknpm install
+# Copy necessary files from build stage
+COPY --from=build /app/dist/src .  
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma  
+COPY --from=build /app/prisma ./prisma  
 
-COPY --from=build /app/dist/src .
-
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-
+# Generate Prisma client
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN npm install -g pm2
 
+CMD ["pm2-runtime", "pm2.config.json"]
