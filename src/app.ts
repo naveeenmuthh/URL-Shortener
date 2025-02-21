@@ -18,13 +18,13 @@ import corsConfig from './config/cors.config';
 import loggerConfig from './config/logger.config';
 import compressConfig from './config/compress.config';
 import prismaPlugin from './plugins/prisma.plugin';
-// import redisPlugin from './plugins/redis.plugin';
 import helmetConfig from './config/helmet.config';
 import { swaggerConfig } from './config/swagger.config';
 
 import googleAuthRoutes from './routes/googleAuth.routes';
 import urlShortenRoutes from './routes/urlShorten.routes';
 import Redis from 'ioredis';
+
 
 const main = async () => {
   const app = fastify({ logger: loggerConfig });
@@ -38,8 +38,11 @@ const main = async () => {
   await app.register(fastifyCompress, compressConfig);
   await app.register(fastifyHelmet, helmetConfig);
   await app.register(prismaPlugin);
-  await app.register(fastifyRedis,{client:new Redis({username:app.config.REDIS_USER_NAME,password:app.config.REDIS_PASSWORD,host: app.config.REDIS_HOST,
-    port: app.config.REDIS_PORT})});
+
+  const redisClient = new Redis({username:app.config.REDIS_USER_NAME,password:app.config.REDIS_PASSWORD,host: app.config.REDIS_HOST,
+    port: app.config.REDIS_PORT}) ;
+
+  await app.register(fastifyRedis,{client:redisClient});
   await app.register(fastifySecureSession, {
     key: crypto.randomBytes(32) 
   });
