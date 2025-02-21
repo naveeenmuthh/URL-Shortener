@@ -10,6 +10,10 @@
 
 - There might be a initial delay(50 seconds) while using the deployed url after a while since the project is hosted in a free tier plan offered by render. 
 
+## Rate Limit
+
+ - You can only create 5 Short URLS within a window of 2 hrs (Modify the rate limit in urlShorten Controller)
+
 ## Deployed URL BASE
  - https://url-shortener-uzv7.onrender.com/
 
