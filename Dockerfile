@@ -11,7 +11,7 @@ RUN npm install
 
 COPY . .
 
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # ---------------- Build Prod Stage
 FROM node:lts-alpine as build
@@ -26,7 +26,7 @@ RUN npm install
 
 COPY . .
 
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN npm run build
 
@@ -47,7 +47,7 @@ COPY --from=build /app/dist/src .
 
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN npm install -g pm2
 

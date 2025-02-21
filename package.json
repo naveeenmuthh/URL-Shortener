@@ -56,7 +56,6 @@
     "jsonwebtoken": "^9.0.2",
     "latest": "^0.2.0",
     "nano": "^10.1.4",
-    "nanoid": "^5.1.0",
     "passport-google-oauth": "^2.0.0",
     "passport-google-oauth20": "^2.0.0",
     "useragent": "^2.3.0"
@@ -69,7 +68,7 @@
     "jest": "^29.7.0",
     "nodemon": "^2.0.22",
     "pino-pretty": "^10.0.0",
-    "prisma": "^6.3.1",
+    "prisma": "^6.4.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.3"
   },
