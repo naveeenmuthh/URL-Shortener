@@ -58,4 +58,4 @@ RUN npm install --production --no-audit --no-optional
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Start the app (using the compiled TypeScript output)
-CMD ["node", "server.js"]
+CMD ["node", "src/index.js"]

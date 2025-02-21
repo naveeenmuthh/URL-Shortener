@@ -38,6 +38,20 @@ const Config = {
        },
        JWT_SECRET:{
         type:"string",
+       },
+       REDIS_USER_NAME:{
+        type:"string"
+       },
+       REDIS_PASSWORD:{
+        type:"string"
+       },
+       REDIS_HOST:{
+        type:"string"
+       },
+       REDIS_PORT:{
+        type:"number",
+        default:18768
+
        }
     }
   },

@@ -14,6 +14,10 @@ declare module 'fastify' {
       GOOGLE_CLIENT_SECRET:string;
       SECRET_SESSION_KEY:string;
       JWT_SECRET:string;
+      REDIS_USER_NAME:string;
+      REDIS_PASSWORD:string;
+      REDIS_HOST:string;
+      REDIS_PORT:number;
     };
   }
 }
