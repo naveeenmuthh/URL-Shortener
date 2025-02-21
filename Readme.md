@@ -1,26 +1,47 @@
-# 🚀 RESTfull APIs boilerplate using Fastify
+# 🚀 URL-Shortening APIs using Fastify
 
-Fastify provides high-performance web framework capabilities and is well-suited for building scalable APIs. It's lightweight and designed to handle a high volume of requests.
+- The URL-Shortening APIS have been implemented as per the guide lines given [here](https://www.igotskills.in/tasks/31)
 
-TypeScript provides one of the best developer experiences in `${currentyear}`, developers can catch errors during compilation rather than runtime, making it easier to catch issues early on in the development process. Additionally, It's strict typing system allows for easier maintenance of the codebase, making it easier to read and refactor code.
+## Note
+
+- There might be a initial delay(50 seconds) while using the deployed url after a while since the project is hosted in a free tier plan offered by render. 
+
+## Note
+
+- [Before Accessing any APIs Login Here to get the Bearer token](#login)
+
+## Deployed URL BASE
+ - https://url-shortener-uzv7.onrender.com/
+
+ ## Login 
+  [Login here](https://url-shortener-uzv7.onrender.com/auth)
+
+ ## Swagger Docs
+ - [Swagger Docs here](https://url-shortener-uzv7.onrender.com/docs)
+
+
+# Overview of the project
+ - Shortens long urls into simple short urls. 
+ - Provides a variety of analytics for the short urls created by a specific user.
+ - Ideal for day to day use, For Example, Managing Social Media Posts and Youtube Content.
+
+ # Challenges Faced and Approach used
+- Data Storage: Choosing MongoDb[NoSQl] for better scalability and performance. 
+- Setting up Databases: Choosing MongoDB and Redis as a Service for better scalability reasons.
+- Unique Hashing: Used Crypto for creating short alias for urls. 
+- Google OAuth: Google OAuth Implementation by the integration of passportjs.
+- Caching: Used Redis for better caching and data optimizations. 
+- Data Integrity: Used Prisma for emphasizing data integrity. 
+- Authentication and Session Management: JWT Tokens for Authentication and Session management. 
+- Token Based Rate limiting: JWT Tokens used for rate limiting.
+- Test Cases: Jest for writing unit tests. 
 
 ## Key Components
-[Tyepscript](https://www.typescriptlang.org/) - [Fastify](https://github.com/fastify/fastify/) - [PrismaJS](https://github.com/prisma/prisma) - [Docker](https:///www.docker.com/) - [Swagger](https://swagger.io/) - [MongoDB](https://www.mongodb.com/) - [PM2](https://pm2.keymetrics.io/) - [FakerJS](https://github.com/faker-js/faker)
+[Tyepscript](https://www.typescriptlang.org/) - [Fastify](https://github.com/fastify/fastify/) - [PrismaJS](https://github.com/prisma/prisma) - [Docker](https:///www.docker.com/) - [Swagger](https://swagger.io/) - [MongoDB](https://www.mongodb.com/) - [PM2](https://pm2.keymetrics.io/) - [redis](https://redis.io/) - [google-oauth](https://developers.google.com/identity/protocols/oauth2)
 
 ## Fastify plugins included
 [@fastify/compress](https://github.com/fastify/fastify-compress) - [@fastify/cors](https://github.com/fastify/fastify-cors) - [@fastify/env](https://github.com/fastify/fastify-env) - [@fastify/helmet](https://github.com/fastify/fastify-helmet) - [@fastify/swagger](https://github.com/fastify/fastify-swagger) - [@fastify/swagger-ui](https://github.com/fastify/fastify-swagger-ui)
 
-## Table of contents
-- [Setup & Configuration](#setup--configuration)
-- [Running locally](#running-locally)
-- [Databases & MongoDB for development](#databases--mongodb-for-development)
-- [File Structure](#file-structure)
-- [Running as a Docker container](#running-as-a-docker-container)
-- [Building for production](#building-for-production)
-- [Debugging](#debugging)
-- [Hot-Reloading](#hot-reloading)
-
----
 
 ## Setup & Configuration
 Clone the repository:
@@ -59,10 +80,10 @@ npm run start
 ```
 
 Now you should be able access the project:
-- APIs: http://127.0.0.1:5000/api/v1/*
+- APIs: http://127.0.0.1:5000/*
 - SwaggerUI documentation: http://127.0.0.1:5000/docs/
 
-> **Note:** Inside the `docs/` you can [download a Postman collection](https://github.com/danielm/fastify-prisma-swagger-rest-boilerplate/blob/main/docs/Postman.collection.json) to import and play with the example APIs
+
 
 ### Other useful commands
 ```bash
@@ -77,22 +98,6 @@ npx prisma db push
 # Seed our database with a bunch of random data
 npx prisma db seed
 ```
-
----
-
-## Databases & MongoDB for development
-Since the project is using by default MongoDB, and It can be a little tricky to setup a replica set for just development:
-
-> [Read more about Prisma and MongoDB](https://www.prisma.io/docs/getting-started/setup-prisma/start-from-scratch/mongodb-typescript-mongodb)
-
-I've included in this project a quick way to spin up a single replica node, just by running:
-```bash
-make mongo
-```
-
-This will bring up a MongoDB instance using Docker. See `.env.example` for customizing some options.
-
----
 
 ## File Structure
 ```
@@ -109,23 +114,6 @@ This will bring up a MongoDB instance using Docker. See `.env.example` for custo
     ├── routes
     └── types          // Typescript types and extensions
 ```
-
-### The example project
-The boilerplate includes an example of the following schema:
-```
-   +-------------+         +--------------+
-   |   Category  |    1    |    Product   |
-   +-------------+---------+--------------+
-   | id          |         | id           |
-   | name        |         | name         |
-   | ...         |         | ...          |
-   | products    |1-------N| category     |
-   +-------------+         +--------------+
-```
-2 CRUDS are available, each root:
-- Categories: http://127.0.0.1:5000/api/v1/categories/*
-- Products: http://127.0.0.1:5000/api/v1/products/*
-- Check the Swagger UI for all routes: http://127.0.0.1:5000/docs
 
 ## Running as a Docker container
 During development:

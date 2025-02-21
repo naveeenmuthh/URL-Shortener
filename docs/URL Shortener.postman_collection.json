@@ -1,0 +1,172 @@
+{
+	"info": {
+		"_postman_id": "ff65895d-4746-49c3-aac8-6e85e71f15b4",
+		"name": "URL Shortener",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42470401"
+	},
+	"item": [
+		{
+			"name": "shortenUrl",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnb29nbGVfaWQiOiIxMTMzNjY1NTk5MzMxMDU3MTg5NTAiLCJpYXQiOjE3NDAwNTUyNjUsImV4cCI6MTc0MDA2MjQ2NX0.8ABbfN1J3a3RtJW3CkznxOhVFTaTue-OfrT5VorMqhw",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"longUrl\":\"https://www.google.com\",\r\n    \"customAlias\":\"gokul\",\r\n    \"topic\":\"search engine\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:5000/api/shorten",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"shorten"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "redirectUrl",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnb29nbGVfaWQiOiIxMTMzNjY1NTk5MzMxMDU3MTg5NTAiLCJpYXQiOjE3Mzk5ODMwODMsImV4cCI6MTczOTk5MDI4M30.3RZyqzP1fopLfaAoVLSwK5uHQQnWnt8_NhIyGgzwr-c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/shorten/google",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"shorten",
+						"google"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "analyticsURL",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnb29nbGVfaWQiOiIxMTMzNjY1NTk5MzMxMDU3MTg5NTAiLCJpYXQiOjE3NDAwNTUyNjUsImV4cCI6MTc0MDA2MjQ2NX0.8ABbfN1J3a3RtJW3CkznxOhVFTaTue-OfrT5VorMqhw",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/analytics/gokul",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"analytics",
+						"gokul"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "topicAnalytics",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnb29nbGVfaWQiOiIxMTMzNjY1NTk5MzMxMDU3MTg5NTAiLCJpYXQiOjE3NDAwNTUyNjUsImV4cCI6MTc0MDA2MjQ2NX0.8ABbfN1J3a3RtJW3CkznxOhVFTaTue-OfrT5VorMqhw",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/analytics/topic/search engine",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"analytics",
+						"topic",
+						"search engine"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "overallAnalytics",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnb29nbGVfaWQiOiIxMTMzNjY1NTk5MzMxMDU3MTg5NTAiLCJpYXQiOjE3NDAwNTUyNjUsImV4cCI6MTc0MDA2MjQ2NX0.8ABbfN1J3a3RtJW3CkznxOhVFTaTue-OfrT5VorMqhw",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/api/analytics/overall",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"analytics",
+						"overall"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

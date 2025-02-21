@@ -4,6 +4,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
 import {subDays,format} from "date-fns";
 import crypto from "crypto";
+import axios from "axios";
 
 export async function urlShorten(request:FastifyRequest<PostShortenURL>, reply:FastifyReply) {
    try {
@@ -33,9 +34,9 @@ export async function urlShorten(request:FastifyRequest<PostShortenURL>, reply:F
      }
  
      // Rate limiting
-   //   if (user_auth.limit >= 5) {
-   //     return reply.status(429).send({ message: "Rate limit exceeded: You can only create 5 short URLs within 2 hours." });
-   //   }
+     if (user_auth.limit >= 5) {
+       return reply.status(429).send({ message: "Rate limit exceeded: You can only create 5 short URLs within 2 hours." });
+     }
  
      let shorten_url_data;
      
@@ -115,12 +116,12 @@ export async function redirectURL(request: FastifyRequest<GetRedirectURL>, reply
     console.log("Shortened URL found:", long_url);
 
     let geoData:string="Unknown";
-    // const { data } = await axios.get(`http://ip-api.com/json/${request.ip}`);
-    // if (data.status === "success") {
-    //     geoData = `${{ country: data.country, region: data.regionName, city: data.city} }`;
-    // }
+    const { data } = await axios.get(`http://ip-api.com/json/${request.ip}`);
+    if (data.status === "success") {
+        geoData = `${{ country: data.country, region: data.regionName, city: data.city} }`;
+    }
 
-    // console.log("geo-data",data);
+    console.log("geo-data",data);
 
  const user_data = request.headers["user-agent"] || "Unknown";
 

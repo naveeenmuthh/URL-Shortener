@@ -1,4 +1,4 @@
-import fastify, { FastifyRequest } from 'fastify'
+import fastify, { FastifyReply, FastifyRequest } from 'fastify'
 import fastifyEnv from '@fastify/env';
 import fastifyCors from '@fastify/cors';
 import fastifyCompress from '@fastify/compress';
@@ -159,10 +159,14 @@ try {
     });
   }
 
+   // Welcome end point 
+   app.get("/",async (request:FastifyRequest,reply:FastifyReply)=>{
+reply.send(200).send({message:"Welcome to URL Shortening Service!!", login:"https://url-shortener-uzv7.onrender.com/docs/auth", swaggerDocs:"https://url-shortener-uzv7.onrender.com/docs" });})
+
   // API Endpoint routes
   await app.register(async api => {
        api.register(googleAuthRoutes,{prefix:"/auth"});
-       api.register(urlShortenRoutes,{prefix:"/api"})
+       api.register(urlShortenRoutes,{prefix:"/api"});
   });
 
   return app;
