@@ -55,4 +55,4 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm install --production
 
 # Start the app
-CMD ["node", "dist/server.js"]
+CMD ["node", "/dist/server.js"]
