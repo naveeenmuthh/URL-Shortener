@@ -50,4 +50,3 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN npm install -g pm2
 
-CMD ["pm2-runtime", "pm2.config.json"]
