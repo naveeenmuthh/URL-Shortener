@@ -50,7 +50,7 @@
 ## Setup & Configuration
 Clone the repository:
 ```bash
-git clone https://github.com/danielm/fastify-prisma-swagger-rest-boilerplate.git
+git clone https://github.com/naveeenmuthh/URL-Shortener.git
 ```
 Create a `.env` file from `.env.example` and tweak it as necessary.
 > Some options need some tweaking if running locally or using docker. Read more bellow 👇
